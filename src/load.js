@@ -38,7 +38,7 @@ ipcMain.on('loadTreeview', (event) => {
             const events = readdirSync(path.join(__dirname, `bots/${bot}/events/${dir}/`)).filter(files => files.endsWith('.js'));
             for (const file of events) {
                 json[json.length - 1].nodes[0].nodes[json[json.length - 1].nodes[0].nodes.length - 1].nodes.push({
-                    text: file.slice(0, -3),
+                    text: file,
                     id: `${botId}-events-${eventGroup}-${file.slice(0, -3)}`
                 });
             };
@@ -56,7 +56,7 @@ ipcMain.on('loadTreeview', (event) => {
             const commands = readdirSync(path.join(__dirname, `/bots/${bot}/commands/${dir}/`)).filter(files => files.endsWith('.js'));
             for (const file of commands) {
                 json[json.length - 1].nodes[1].nodes[json[json.length - 1].nodes[1].nodes.length - 1].nodes.push({
-                    text: file.slice(0, -3),
+                    text: file,
                     id: `${botId}-commands-${eventGroup}-${file.slice(0, -3)}`
                 });
             };

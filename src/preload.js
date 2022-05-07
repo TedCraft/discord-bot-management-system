@@ -67,26 +67,6 @@ function createNavTab(navTabId, navTabName, navMenuId, navMenuContent) {
       <button type="button" class="btn-close" aria-label="Close" onclick="closeNavTabs('${navTabId}', '${navMenuId}')"></button></a>`;
 
     const navContent = document.getElementById("nav-tabContent");
-    navContent.innerHTML +=
-      `<div class="tab-pane" id="${navMenuId}" role="tabpanel" aria-labelledby="${navTabId}">
-        <div class="p-3">
-          ${navMenuContent}
-        </div>
-      </div>`;
-    const tab = new bootstrap.Tab(navTab.lastChild)
-    tab.show()
-  }
-}
-
-function createNavTabCode(navTabId, navTabName, navMenuId, navMenuContent) {
-  if (!document.getElementById(navTabId)) {
-    const navTab = document.getElementById("nav-tab");
-    navTab.innerHTML +=
-      `<a class="nav-link" id="${navTabId}" data-bs-toggle="tab" data-bs-target="#${navMenuId}" type="button"
-      role="tab" aria-controls="${navMenuId}" aria-selected="false">${navTabName}
-      <button type="button" class="btn-close" aria-label="Close" onclick="closeNavTabs('${navTabId}', '${navMenuId}')"></button></a>`;
-
-    const navContent = document.getElementById("nav-tabContent");
     const contentElem = document.createElement('div');
     contentElem.classList.add('tab-pane');
     contentElem.id = `${navMenuId}`;
@@ -186,7 +166,7 @@ ipcRenderer.on('openCode', (e, id) => {
     const menuContent =
       `<div class="code-editor" id="${id}-code-editor"></div>`;
 
-    createNavTabCode(`${id}-code-tab`, `Редактирование ${splitId[splitId.length - 1]}`, `${id}-code`, menuContent);
+    createNavTab(`${id}-code-tab`, `Редактирование ${splitId[splitId.length - 1]}`, `${id}-code`, menuContent);
     const pathFile = path.join(__dirname, `/bots/${botName.lastChild.textContent}/${groupName.lastChild.textContent}/${group.lastChild.textContent}/${name.lastChild.textContent}.js`);
     const file = readFileSync(pathFile);
     if (file) {

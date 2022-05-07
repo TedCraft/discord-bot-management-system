@@ -2,6 +2,9 @@ const { ipcRenderer } = require('electron');
 const copydir = require('copy-dir');
 const { existsSync, mkdirSync, readdirSync, writeFileSync } = require('fs');
 const path = require('path');
+const { map } = require('jquery');
+const { Http2ServerRequest } = require('http2');
+const { resolve } = require('path');
 
 function closeElements(ids) {
     for (const i in ids) {
@@ -139,8 +142,10 @@ function createBot(navTabId, navContentId) {
 
 
 function createGroup(name, folder, navTabId, navContentId) {
+    const botName = document.getElementById(name);
+    const folderName = document.getElementById(`${name}-${folder}`);
     const groupName = document.getElementById('inputGroupName');
-    const dir = path.join(__dirname, `/bots/${name}/${folder}/${groupName.value}`);
+    const dir = path.join(__dirname, `/bots/${botName.lastChild.textContent}/${folderName.lastChild.textContent}/${groupName.value}`);
     if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
         addGroupToTree(name, folder, groupName.value);
