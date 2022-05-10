@@ -82,7 +82,7 @@ function addToTree(name) {
         const events = readdirSync(path.join(__dirname, `/bots/${name}/events/${dir}/`)).filter(files => files.endsWith('.js'));
         for (const file of events) {
             html += `<div role="treeitem" class="list-group-item" style="padding-left:4.2rem;" aria-level="4" id="${id}-events-${dir}-${file.slice(0, -3)}">
-                    ${file.slice(0, -3)}</div>`
+                    ${file}</div>`
         };
         html += `</div></div>`;
     });
@@ -96,10 +96,10 @@ function addToTree(name) {
         <i class="state-icon fa fa-angle-right fa-fw"></i>${dir}</div>
     <div role="group" class="list-group collapse" id="tree-item-${id}-commands-${dir}">`;
 
-        const commands = readdirSync(path.join(__dirname, `/bots/${id}/commands/${dir}/`)).filter(files => files.endsWith('.js'));
+        const commands = readdirSync(path.join(__dirname, `/bots/${name}/commands/${dir}/`)).filter(files => files.endsWith('.js'));
         for (const file of commands) {
             html += `<div role="treeitem" class="list-group-item" data-bs-toggle="collapse" style="padding-left:4.2rem;" aria-level="4" id="${id}-commands-${dir}-${file.slice(0, -3)}">
-            ${file.slice(0, -3)}</div>`
+            ${file}</div>`
         };
         html += `</div></div>`;
     });

@@ -7,6 +7,8 @@ ipcMain.on('loadTreeview', (event) => {
 
     const json = new Array();;
     readdirSync(path.join(__dirname, 'bots')).forEach(bot => {
+        if (bot == '.gitkeep') return;
+
         const botId = bot.replace(/ /g, "_");
 
         json.push({
