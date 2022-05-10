@@ -1,108 +1,125 @@
 html {
-  font-size: 12px;
-  padding: 0;
-  margin: 0;
+    font-size: 14px;
+    padding: 0;
+    margin: 0;
 }
 
 body {
-  overflow: hidden;
+    overflow: hidden;
 }
 
 
 .pane.pane-main {
-  background-color: #F0F0F0;
-  border-right: 1px solid #D9D9D9;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 70%;
-  position: absolute;
-  overflow-y: auto;
+    background-color: #F0F0F0;
+    border-right: 1px solid #D9D9D9;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 70%;
+    position: absolute;
+    overflow-y: auto;
 }
 
 .pane.pane-nav {
-  top: 0;
-  bottom: 0;
-  left: 30%;
-  right: 0;
-  position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 30%;
+    right: 0;
+    position: absolute;
 }
 
 .pane.pane-list {
-  top: 0;
-  bottom: 0;
-  left: 30%;
-  right: 0;
-  position: absolute;
-  overflow: hidden;
+    top: 0;
+    bottom: 0;
+    left: 30%;
+    right: 0;
+    position: absolute;
+    overflow: hidden;
 }
 
 .flex-scroll-x {
-  overflow-x: auto;
-  overflow-y: hidden;
-  white-space: nowrap;
-  flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    flex-wrap: nowrap;
 }
 
 .flex-scroll-y {
-  overflow-y: auto;
-  overflow-x: hidden;
-  height: auto;
-  max-height: 92vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: auto;
+    max-height: 92vh;
+}
+
+.list {
+    max-height: 70vh;
+}
+
+.flex {
+    position: relative;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    min-width: 0;
+    white-space: normal;
+    word-wrap: break-word;
+    padding: 0;
+    overflow: hidden;
 }
 
 .code-editor {
-  height: 85vh;
-  margin-top: 14px;
+    height: 85vh;
+    margin-top: 14px;
 }
 
 .btn-close {
-  width: .15em;
+    width: .15em;
 }
 
 .bstreeview {
-  position: relative;
-  display: -ms-flexbox;
-  display: flex;
-  -ms-flex-direction: column;
-  flex-direction: column;
-  min-width: 0;
-  word-wrap: break-word;
-  background-color: #fff;
-  background-clip: border-box;
-  border: 1px solid rgba(0, 0, 0, .125);
-  border-radius: .25rem;
+    position: relative;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: #fff;
+    background-clip: border-box;
+    border: 1px solid rgba(0, 0, 0, .125);
+    border-radius: .25rem;
 
-  padding: 0;
-  overflow: hidden;
+    padding: 0;
+    overflow: hidden;
 }
 
 .bstreeview .list-group {
-  margin-bottom: 0;
+    margin-bottom: 0;
 }
 
 .bstreeview .list-group-item {
-  border-radius: 0;
-  border-width: 1px 0 0 0;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  cursor: pointer;
+    border-radius: 0;
+    border-width: 1px 0 0 0;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    cursor: pointer;
 }
 
 .bstreeview .list-group-item:hover {
-  background-color: #dee2e6;
+    background-color: #dee2e6;
 }
 
 .bstreeview>.list-group-item:first-child {
-  border-top-width: 0;
+    border-top-width: 0;
 }
 
 .bstreeview .state-icon {
-  margin-right: 8px;
-  width: 12px;
-  text-align: center;
+    margin-right: 8px;
+    width: 12px;
+    text-align: center;
 }
 
 .bstreeview .item-icon {
-  margin-right: 5px;
+    margin-right: 5px;
 }

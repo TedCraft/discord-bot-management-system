@@ -1,15 +1,11 @@
-//const { connectToDatabase } = require('../../src/database/database');
 const { Routes } = require('discord-api-types/v9');
 const { REST } = require('@discordjs/rest');
+const { Client } = require('discord.js')
 
-module.exports = async (client) => {
+module.exports = async (client = Client.prototype) => {
+    //Default parameters here only for intellisence syntax highlighting. Yuo can remove it if neccesary.
     console.log(`\nLogged to the client ${client.user.username}\n-> Ready on ${client.guilds.cache.size} servers for a total of ${client.users.cache.size} users`);
     client.user.setActivity(client.config.app.activity);
-
-    //console.log(`\nCheck database...`);
-    //client.db = await connectToDatabase(client);
-    //await checkDatabase(client);
-    //console.log(`Database check successful!`);
 
     const rest = new REST({ version: '9' }).setToken(client.config.app.token);
     await (async () => {

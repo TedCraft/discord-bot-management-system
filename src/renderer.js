@@ -1,7 +1,8 @@
-const { ipcRenderer } = require('electron');
+const { ipcRenderer, ipcMain } = require('electron');
 const copydir = require('copy-dir');
-const { existsSync, mkdirSync, readdirSync, writeFileSync } = require('fs');
+const { existsSync, mkdirSync, readdirSync, writeFileSync, rmSync } = require('fs');
 const path = require('path');
+const { createModal } = require('./functions');
 const { map } = require('jquery');
 const { Http2ServerRequest } = require('http2');
 const { resolve } = require('path');
@@ -42,6 +43,15 @@ function closeNavTabs(navTabId, navContentId) {
     }
 }
 
+async function closeModal() {
+    const elem = document.getElementById("staticBackdrop");
+    elem.addEventListener('hidden.bs.modal', function (event) {
+        document.getElementById("modal").innerHTML = "";
+    });
+    const modal = bootstrap.Modal.getInstance(elem);
+    modal.hide();
+}
+
 function generateTree(json) {
     $('#tree').bstreeview({
         data: json,
@@ -71,7 +81,7 @@ function addToTree(name) {
 
         const events = readdirSync(path.join(__dirname, `/bots/${name}/events/${dir}/`)).filter(files => files.endsWith('.js'));
         for (const file of events) {
-            html += `<div role="treeitem" class="list-group-item" data-bs-toggle="collapse" data-bs-target="#tree-item-${id}-events-${dir}-${file.slice(0, -3)}" style="padding-left:4.2rem;" aria-level="4" id="${id}-events-${dir}-${file.slice(0, -3)}">
+            html += `<div role="treeitem" class="list-group-item" style="padding-left:4.2rem;" aria-level="4" id="${id}-events-${dir}-${file.slice(0, -3)}">
                     ${file.slice(0, -3)}</div>`
         };
         html += `</div></div>`;
@@ -88,7 +98,7 @@ function addToTree(name) {
 
         const commands = readdirSync(path.join(__dirname, `/bots/${id}/commands/${dir}/`)).filter(files => files.endsWith('.js'));
         for (const file of commands) {
-            html += `<div role="treeitem" class="list-group-item" data-bs-toggle="collapse" data-bs-target="#tree-item-${id}-commands-${dir}-${file.slice(0, -3)}" style="padding-left:4.2rem;" aria-level="4" id="${id}-commands-${dir}-${file.slice(0, -3)}">
+            html += `<div role="treeitem" class="list-group-item" data-bs-toggle="collapse" style="padding-left:4.2rem;" aria-level="4" id="${id}-commands-${dir}-${file.slice(0, -3)}">
             ${file.slice(0, -3)}</div>`
         };
         html += `</div></div>`;
@@ -108,11 +118,17 @@ function addGroupToTree(name, folder, groupName) {
     treeItem.innerHTML += html;
 }
 
+function addFileToTree(botName, folder, groupName, name) {
+    const treeItem = document.getElementById(`tree-item-${botName}-${folder}-${groupName}`);
+    var html = `<div role="treeitem" class="list-group-item" style="padding-left:4.2rem;" aria-level="3" id="${botName}-${folder}-${groupName}-${name.slice(0, -3)}">${name}</div>`
+    treeItem.innerHTML += html;
+}
+
 function createBot(navTabId, navContentId) {
     const name = document.getElementById('inputBotName');
     const token = document.getElementById('inputToken');
     const template = document.getElementById('inputTemplate');
-    const from = path.join(__dirname, `/templates/bots/${template.options[template.selectedIndex].value}`);
+    const from = path.join(__dirname, `/templates/bots/${template.value}`);
     const to = path.join(__dirname, `/bots/${name.value}`);
     if (!existsSync(to)) {
         if (token.value === '') {
@@ -141,7 +157,7 @@ function createBot(navTabId, navContentId) {
 }
 
 
-function createGroup(name, folder, navTabId, navContentId) {
+function createGroup(name, folder) {
     const botName = document.getElementById(name);
     const folderName = document.getElementById(`${name}-${folder}`);
     const groupName = document.getElementById('inputGroupName');
@@ -149,11 +165,190 @@ function createGroup(name, folder, navTabId, navContentId) {
     if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
         addGroupToTree(name, folder, groupName.value);
-        closeNavTabs(navTabId, navContentId);
+        closeModal();
     }
     else {
         ipcRenderer.send('error', `Ошибка!`, `Группа с именем ${groupName.value} уже существует!`);
     }
+}
+
+function deleteBot(id) {
+    const name = document.getElementById(id);
+    const group = document.getElementById(`tree-item-${id}`);
+    rmSync(path.join(__dirname, `bots/${name.lastChild.textContent}`), { recursive: true });
+    const tree = document.getElementById('tree');
+    tree.removeChild(name);
+    tree.removeChild(group);
+    closeModal();
+}
+
+function deleteGroup(id) {
+    const splitId = id.split('-');
+    const groupId = `${splitId[0]}-${splitId[1]}-${splitId[2]}`;
+    const botName = document.getElementById(splitId[0]);
+    const groupName = document.getElementById(`${splitId[0]}-${splitId[1]}`);
+    const name = document.getElementById(groupId);
+    //const group = document.getElementById(`tree-item-${groupId}`);
+
+    const dir = path.join(__dirname, `bots/${botName.lastChild.textContent}/${groupName.lastChild.textContent}/${name.lastChild.textContent}`);
+    if (readdirSync(dir).length != 0) {
+        ipcRenderer.send('error', `Ошибка!`, `Группа с именем ${name.lastChild.textContent} не пустая!`);
+        return;
+    }
+
+    rmSync(dir, { recursive: true });
+    //const tree = document.getElementById('tree');
+    name.remove();
+    //name.remove();
+
+    closeModal();
+}
+
+function selectActive(elem) {
+    if (!elem.classList.contains("active")) {
+        const activeElem = document.getElementById("events--list").getElementsByClassName("active");
+        if (activeElem.length != 0) {
+            for (let aElem of activeElem)
+                aElem.classList.remove("active");
+        }
+        elem.classList.add("active");
+    }
+}
+
+function eventCreate(id) {
+    const activeElem = document.getElementById("events--list").getElementsByClassName("active");
+    if (activeElem.length == 0) {
+        ipcRenderer.send('error', `Ошибка!`, `Выберите событие!`);
+        return;
+    }
+
+    const splitId = id.split('-');
+    const botName = document.getElementById(splitId[0]);
+    const groupName = document.getElementById(`${splitId[0]}-${splitId[1]}`);
+    const name = document.getElementById(`${splitId[0]}-${splitId[1]}-${splitId[2]}`);
+
+    const pathToParentDir = path.join(__dirname, `bots/${botName.lastChild.textContent}/${groupName.lastChild.textContent}`);
+    const pathToFile = path.join(__dirname, `bots/${botName.lastChild.textContent}/${groupName.lastChild.textContent}/${name.lastChild.textContent}/${activeElem[0].lastChild.textContent}.js`);
+
+    const dirs = readdirSync(pathToParentDir)
+    for (let dir of dirs) {
+        const files = readdirSync(`${pathToParentDir}/${dir}`).filter(files => files.endsWith('.js'));
+        for (const file of files) {
+            if (file.slice(0, -3) == activeElem[0].lastChild.textContent) {
+                ipcRenderer.send('error', `Ошибка!`, `Событие ${file.slice(0, -3)} уже существует!`);
+                return;
+            }
+        }
+    }
+    const eventTemplate = require('./templates/events');
+    let params = "";
+    for (let param of eventTemplate.events[activeElem[0].lastChild.textContent]) {
+        params += `, ${param}`;
+    }
+
+    writeFileSync(pathToFile, `${eventTemplate.template(params)}`);
+    addFileToTree(splitId[0], splitId[1], splitId[2], `${activeElem[0].lastChild.textContent}.js`);
+    closeModal();
+}
+
+function addParameter(groupId) {
+    const content =
+        `<form>
+            <div class="mb-3">
+                <label for="${groupId}-input-parameter-name" class="form-label">Название параметра:</label>
+                <input type="text" class="form-control" id="${groupId}-input-parameter-name">
+            </div>
+            <div class="mb-3">
+                <label for="${groupId}-input-parameter-description" class="form-label">Описание параметра</label>
+                <textarea class="form-control" id="${groupId}-input-parameter-description" rows="2"></textarea>
+            </div>
+        </form>`;
+    createModal(content, `addCommandParameter('${groupId}')`, 'Добавление параметра', 'Добавить');
+}
+
+function addCommandParameter(groupId) {
+    const name = document.getElementById(`${groupId}-input-parameter-name`);
+    const description = document.getElementById(`${groupId}-input-parameter-description`);
+    const select = document.getElementById(`${groupId}-parameters-select`);
+    const check = document.getElementById(`${groupId}-required-checkbox`);
+
+    const html =
+        `<tr class="text-center">` +
+            `<td class="p-0 b-0"><div class="d-grid gap-1"><button type="button" class="btn btn-danger rounded-0 px-0" onclick="removeTableElem(this)">X</button></div></td>` +
+            `<td>${select.value}</td>` +
+            `<td>${name.value}</td>` +
+            `<td>${description.value}</td>` +
+            `<td><input class="form-check-input" type="checkbox" value="" checked></td>` +
+        `</tr>`;
+        
+    document.getElementById(`${groupId}-parameters`).innerHTML += html;
+    closeModal();
+}
+
+function removeTableElem(elem) {
+    elem.parentElement.parentElement.parentElement.remove();
+}
+
+function createCommand(groupId, navTabId, navContentId) {
+    const name = document.getElementById(`${groupId}-input-command-name`);
+    const description = document.getElementById(`${groupId}-input-command-description`);
+    
+    const splitId = groupId.split('-');
+    const botName = document.getElementById(splitId[0]);
+    const groupName = document.getElementById(`${splitId[0]}-${splitId[1]}`);
+    const folderName = document.getElementById(groupId);
+    
+    const pathToParentDir = path.join(__dirname, `bots/${botName.lastChild.textContent}/${groupName.lastChild.textContent}`);
+    const pathToFile = path.join(__dirname, `bots/${botName.lastChild.textContent}/${groupName.lastChild.textContent}/${folderName.lastChild.textContent}/${name.value}.js`);
+
+    const dirs = readdirSync(pathToParentDir)
+    for (let dir of dirs) {
+        const files = readdirSync(`${pathToParentDir}/${dir}`).filter(files => files.endsWith('.js'));
+        for (const file of files) {
+            if (file.slice(0, -3) == name.value) {
+                ipcRenderer.send('error', `Ошибка!`, `Комманда ${file.slice(0, -3)} уже существует!`);
+                return;
+            }
+        }
+    }
+    
+    const cTemplate = require('./templates/commands');
+    let optionsTop = `${cTemplate.set('Name', `'${name.value}'`)}${cTemplate.set('Description', `'${description.value}'`)}`;
+    let optionsBot = '';
+    
+    const tbody = document.getElementById(`${groupId}-parameters`);
+    for(let row of tbody.childNodes) {
+        const cType = row.childNodes[1].textContent;
+        const cName = row.childNodes[2].textContent;
+        const cDescription = row.childNodes[3].textContent;
+        console.log(row.childNodes[4])
+        const cRequired = row.childNodes[4].lastChild.checked;
+        
+        const commandOptions = `${cTemplate.set('Name', `'${cName}'`)}${cTemplate.set('Description', `'${cDescription}'`)}${cTemplate.set('Required', cRequired)}`
+        optionsTop += cTemplate.add(cType, commandOptions)
+        optionsBot += cTemplate.get(cType, cName)
+    }
+
+    writeFileSync(pathToFile, cTemplate.template(optionsTop, optionsBot));
+    addFileToTree(splitId[0], splitId[1], splitId[2], `${name.value}.js`);
+    closeNavTabs(navTabId, navContentId);
+}
+
+function deleteFile(id) {
+    const splitId = id.split('-');
+    const botName = document.getElementById(splitId[0]);
+    const groupName = document.getElementById(`${splitId[0]}-${splitId[1]}`);
+    const folderName = document.getElementById(`${splitId[0]}-${splitId[1]}-${splitId[2]}`);
+    const name = document.getElementById(`${id}`);
+    //const group = document.getElementById(`tree-item-${groupId}`);
+
+    const file = path.join(__dirname, `bots/${botName.lastChild.textContent}/${groupName.lastChild.textContent}/${folderName.lastChild.textContent}/${name.lastChild.textContent}`);
+
+    rmSync(file, { recursive: true });
+    //const tree = document.getElementById('tree');
+    name.remove();
+
+    closeModal();
 }
 
 const json = ipcRenderer.sendSync('loadTreeview');

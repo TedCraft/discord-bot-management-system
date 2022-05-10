@@ -83,7 +83,13 @@ ipcMain.on('show-context-menu-bot-eorc', (event, id) => {
 // context menu
 ipcMain.on('show-context-menu-bot-eorc-group', (event, id) => {
     const name = id.split('-')[1] == 'events' ? 'событие': 'комманду';
+    const commandName = id.split('-')[1] == 'events' ? 'Event': 'Command';
     const template = [
+        {
+            label: `Создать ${name}`,
+            click: () => {  event.sender.send(`create${commandName}`, id) }
+        },
+        { type: 'separator' },
         {
             label: 'Создать группу',
             click: () => { event.sender.send('createGroup', id) }
@@ -92,10 +98,52 @@ ipcMain.on('show-context-menu-bot-eorc-group', (event, id) => {
             label: `Удалить группу`,
             click: () => { event.sender.send('deleteGroup', id) }
         },
+    ]
+    createMenu(event, template)
+});
+
+
+// context menu
+ipcMain.on('show-context-menu-bot-eorc-group-events', (event, id) => {
+    const name = id.split('-')[1] == 'events' ? 'событие': 'комманду';
+    const commandName = id.split('-')[1] == 'events' ? 'Event': 'Command';
+    const template = [
+        {
+            label: `Создать событие`,
+            click: () => { event.sender.send(`createEvent`, id) }
+        },
+        {
+            label: `Удалить событие`,
+            click: () => { event.sender.send('deleteEvent', id) }
+        },
         { type: 'separator' },
         {
-            label: `Создать ${name}`,
+            label: `Открыть код`,
+            click: () => { event.sender.send('openCode', id) }
+        },
+    ]
+    createMenu(event, template)
+});
+
+// context menu
+ipcMain.on('show-context-menu-bot-eorc-group-commands', (event, id) => {
+    const template = [
+        {
+            label: `Создать комманду`,
+            click: () => { event.sender.send(`createCommand`, id) }
+        },
+        {
+            label: `Редактировать комманду`,
             click: () => { event.sender.send('context-menu-command', 'menu-item-1') }
+        },
+        {
+            label: `Удалить комманду`,
+            click: () => { event.sender.send(`deleteCommand`, id) }
+        },
+        { type: 'separator' },
+        {
+            label: `Открыть код`,
+            click: () => { event.sender.send('openCode', id) }
         },
     ]
     createMenu(event, template)
@@ -103,19 +151,13 @@ ipcMain.on('show-context-menu-bot-eorc-group', (event, id) => {
 
 // context menu
 ipcMain.on('show-context-menu-bot-eorc-group-jsfile', (event, id) => {
-    const name = id.split('-')[1] == 'events' ? 'событие': 'комманду';
-    const commandName = id.split('-')[1] == 'events' ? 'Event': 'Command';
     const template = [
         {
-            label: `Создать ${name}`,
-            click: () => { event.sender.send(`create${commandName}`, 'menu-item-1') }
+            label: `Создать файл`,
+            click: () => { event.sender.send(`createFile`, id) }
         },
         {
-            label: `Редактировать ${name}`,
-            click: () => { event.sender.send('context-menu-command', 'menu-item-1') }
-        },
-        {
-            label: `Удалить ${name}`,
+            label: `Удалить файл`,
             click: () => { event.sender.send('context-menu-command', 'menu-item-1') }
         },
         { type: 'separator' },
