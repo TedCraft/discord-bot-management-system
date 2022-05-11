@@ -23,18 +23,46 @@ amdRequire.config({
 self.module = undefined;
 
 amdRequire(['vs/editor/editor.main'], function () {
+
     /*monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
         allowNonTsExtensions: true,
         moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
         module: monaco.languages.typescript.ModuleKind.CommonJS,
         noEmit: true,
         esModuleInterop: true,
+    });*/
+
+    monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+        target: monaco.languages.typescript.ScriptTarget.ES2016,
+        allowNonTsExtensions: true,
+        moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+        module: monaco.languages.typescript.ModuleKind.CommonJS,
+        noEmit: true,
+        typeRoots: [path.join(__dirname, "../node_modules/@types")]
     });
-    
-    const dirs = readdirSync('../node_modules/@types');
-    for (let dir of dirs) {
-        
-    }*/
+
+    const dirs = readdirSync(path.join(__dirname, '../node_modules/@types/node')).filter(files => files.endsWith('.d.ts'));;
+    for (let file of dirs) {
+        const req = readFileSync(path.join(__dirname, `../node_modules/@types/node/${file}`)).toString();
+        monaco.languages.typescript.javascriptDefaults.addExtraLib(
+            req,
+            path.join(__dirname, `../node_modules/@types/node/${file}`)
+        );
+        //monaco.editor.createModel(req, 'typescript', monaco.Uri.parse(path.join(__dirname, `../node_modules/@types/node/${file}`)));
+    }
+
+    const rdirs = readdirSync(path.join(__dirname, '../node_modules'), { withFileTypes: true }).filter(dir => dir.isDirectory()).map(dir => dir.name);
+    for (let dir of rdirs) {
+        const files = readdirSync(path.join(__dirname, `../node_modules/${dir}`)).filter(files => files.endsWith('.d.ts'));
+        for (let file of files) {
+            const req = readFileSync(path.join(__dirname, `../node_modules/${dir}/${file}`)).toString();
+            monaco.languages.typescript.javascriptDefaults.addExtraLib(
+                req,
+                path.join(__dirname, `../node_modules/${dir}/${file}`)
+            );
+            //monaco.editor.createModel(req, 'typescript', monaco.Uri.parse(path.join(__dirname, `../node_modules/@types/node/${file}`)));
+        }
+    }
 });
 
 window.addEventListener('contextmenu', (e) => {
@@ -198,18 +226,18 @@ ipcRenderer.on('createCommand', (e, id) => {
     const menuContent =
         `<form>
             <div class="mb-3">
-                <label for="${groupId}-input-command-name" class="form-label">Название комманды:</label>
+                <label for="${groupId}-input-command-name" class="form-label">Название команды:</label>
                 <input type="text" class="form-control" id="${groupId}-input-command-name">
             </div>
             <div class="mb-3">
-                <label for="${groupId}-input-command-description" class="form-label">Описание комманды</label>
+                <label for="${groupId}-input-command-description" class="form-label">Описание команды</label>
                 <textarea class="form-control" id="${groupId}-input-command-description" rows="2"></textarea>
             </div>
             <div class="mb-3">
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="${groupId}-parameters-heading">
                         <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${groupId}-parameters-collapse" aria-expanded="true" aria-controls="${groupId}-parameters-collapse">
-                            Параметры комманды
+                            Параметры команды
                         </button>
                     </h2>
                     <div id="${groupId}-parameters-collapse" class="accordion-collapse collapse show" aria-labelledby="${groupId}-parameters-heading">
@@ -243,7 +271,7 @@ ipcRenderer.on('createCommand', (e, id) => {
             <button type="button" class="btn btn-primary" onclick="createCommand('${groupId}', 'nav-create-command-tab-${groupId}', 'nav-create-command-${groupId}')">Создать</button>
         </form>`
 
-    createNavTab(`nav-create-command-tab-${groupId}`, "Создание комманды", `nav-create-command-${groupId}`, menuContent);
+    createNavTab(`nav-create-command-tab-${groupId}`, "Создание команды", `nav-create-command-${groupId}`, menuContent);
 });
 
 ipcRenderer.on('deleteEvent', (e, id) => {
@@ -251,5 +279,5 @@ ipcRenderer.on('deleteEvent', (e, id) => {
 });
 
 ipcRenderer.on('deleteCommand', (e, id) => {
-    createYesNoModal(`deleteFile('${id}')`, "Внимание!", "Вы действительно хотите удалить комманду?");
+    createYesNoModal(`deleteFile('${id}')`, "Внимание!", "Вы действительно хотите удалить команду?");
 });

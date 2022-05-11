@@ -306,7 +306,7 @@ function createCommand(groupId, navTabId, navContentId) {
         const files = readdirSync(`${pathToParentDir}/${dir}`).filter(files => files.endsWith('.js'));
         for (const file of files) {
             if (file.slice(0, -3) == name.value) {
-                ipcRenderer.send('error', `Ошибка!`, `Комманда ${file.slice(0, -3)} уже существует!`);
+                ipcRenderer.send('error', `Ошибка!`, `Команда ${file.slice(0, -3)} уже существует!`);
                 return;
             }
         }
