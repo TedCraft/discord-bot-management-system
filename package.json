@@ -12,10 +12,7 @@
     "lint": "echo \"No linting configured\""
   },
   "keywords": [],
-  "author": {
-    "name": "TedCraft",
-    "email": "tedwo@yandex.ru"
-  },
+  "author": "TedCraft <tedwo@yandex.ru>",
   "license": "MIT",
   "config": {
     "forge": {
@@ -45,11 +42,17 @@
     }
   },
   "dependencies": {
-    "copy-dir": "^1.3.0",
     "electron-context-menu": "^3.1.2",
     "electron-squirrel-startup": "^1.0.0",
+    "copy-dir": "^1.3.0",
     "jquery": "^3.6.0",
-    "monaco-editor": "^0.33.0"
+    "monaco-editor": "^0.33.0",
+    "@discordjs/opus": "^0.5.3",
+    "@discordjs/rest": "^0.3.0",
+    "@discordjs/voice": "^0.8.0",
+    "discord-api-types": "^0.31.1",
+    "discord-ytdl-core": "^5.0.4",
+    "discord.js": "^13.6.0"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.63",
@@ -58,5 +61,13 @@
     "@electron-forge/maker-squirrel": "^6.0.0-beta.63",
     "@electron-forge/maker-zip": "^6.0.0-beta.63",
     "electron": "18.0.4"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TedCraft/discord-bot-management-system.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TedCraft/discord-bot-management-system/issues"
+  },
+  "homepage": "https://github.com/TedCraft/discord-bot-management-system#readme"
 }

@@ -1,4 +1,5 @@
 const { Client, Intents } = require('discord.js');
+const path = require("path");
 
 global.client = new Client({
     intents: [
@@ -15,6 +16,6 @@ global.client = new Client({
 
 client.config = require('./config');
 
-require('./src/load');
+require(path.join(__dirname, '/src/load'));
 
 client.login(client.config.app.token);

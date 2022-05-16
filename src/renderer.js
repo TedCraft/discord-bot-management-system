@@ -2,10 +2,7 @@ const { ipcRenderer, ipcMain } = require('electron');
 const copydir = require('copy-dir');
 const { existsSync, mkdirSync, readdirSync, writeFileSync, rmSync } = require('fs');
 const path = require('path');
-const { createModal } = require('./functions');
-const { map } = require('jquery');
-const { Http2ServerRequest } = require('http2');
-const { resolve } = require('path');
+const { createModal, closeModal } = require('./functions');
 
 function closeElements(ids) {
     for (const i in ids) {
@@ -41,15 +38,6 @@ function closeNavTabs(navTabId, navContentId) {
         navContentChild.classList.add('show');
         navContentChild.classList.add('active');*/
     }
-}
-
-async function closeModal() {
-    const elem = document.getElementById("staticBackdrop");
-    elem.addEventListener('hidden.bs.modal', function (event) {
-        document.getElementById("modal").innerHTML = "";
-    });
-    const modal = bootstrap.Modal.getInstance(elem);
-    modal.hide();
 }
 
 function generateTree(json) {
@@ -106,6 +94,7 @@ function addToTree(name) {
 
     html += `</div>`;
     tree.innerHTML += html;
+    tree.normalize();
 }
 
 
@@ -116,12 +105,14 @@ function addGroupToTree(name, folder, groupName) {
                 <i class="state-icon fa fa-angle-right fa-fw"></i>${groupName}</div>
             <div role="group" class="list-group collapse" id="tree-item-${name}-${folder}-${id}"></div>`;
     treeItem.innerHTML += html;
+    treeItem.normalize();
 }
 
 function addFileToTree(botName, folder, groupName, name) {
     const treeItem = document.getElementById(`tree-item-${botName}-${folder}-${groupName}`);
     var html = `<div role="treeitem" class="list-group-item" style="padding-left:4.2rem;" aria-level="3" id="${botName}-${folder}-${groupName}-${name.slice(0, -3)}">${name}</div>`
     treeItem.innerHTML += html;
+    treeItem.normalize();
 }
 
 function createBot(navTabId, navContentId) {
@@ -241,12 +232,7 @@ function eventCreate(id) {
         }
     }
     const eventTemplate = require('./templates/events');
-    let params = "";
-    for (let param of eventTemplate.events[activeElem[0].lastChild.textContent]) {
-        params += `, ${param}`;
-    }
-
-    writeFileSync(pathToFile, `${eventTemplate.template(params)}`);
+    writeFileSync(pathToFile, `${eventTemplate.template(eventTemplate.getStrings(eventTemplate.events[activeElem[0].lastChild.textContent]))}`);
     addFileToTree(splitId[0], splitId[1], splitId[2], `${activeElem[0].lastChild.textContent}.js`);
     closeModal();
 }
@@ -266,23 +252,57 @@ function addParameter(groupId) {
     createModal(content, `addCommandParameter('${groupId}')`, 'Добавление параметра', 'Добавить');
 }
 
+function addParameterModal(groupId) {
+    const elem = document.createElement('tr');
+    elem.classList.add('text-center');
+    elem.classList.add('p-0');
+    elem.innerHTML =
+        `<tr class="text-center">` +
+        `<td class="p-0 border-0"><div class="d-grid gap-1"><button type="button" class="btn btn-danger rounded-0 px-0 border-0" onclick="removeTableElem(this)">X</button></div></td>` +
+        `<td><div class="d-grid gap-1"><input type="email" class="form-control rounded-0 px-0 border-0"></div></td>` +
+        `<td><div class="d-grid gap-1"><input type="email" class="form-control rounded-0 px-0 border-0"></div></td>` +
+        `</tr>`;
+    elem.normalize();
+
+    document.getElementById(`${groupId}-parameters-modal`).appendChild(elem);
+}
+
 function addCommandParameter(groupId) {
     const name = document.getElementById(`${groupId}-input-parameter-name`);
     const description = document.getElementById(`${groupId}-input-parameter-description`);
     const select = document.getElementById(`${groupId}-parameters-select`);
-    const check = document.getElementById(`${groupId}-required-checkbox`);
 
     const html =
         `<tr class="text-center">` +
-            `<td class="p-0 b-0"><div class="d-grid gap-1"><button type="button" class="btn btn-danger rounded-0 px-0" onclick="removeTableElem(this)">X</button></div></td>` +
-            `<td>${select.value}</td>` +
-            `<td>${name.value}</td>` +
-            `<td>${description.value}</td>` +
-            `<td><input class="form-check-input" type="checkbox" value="" checked></td>` +
+        `<td class="p-0 border-0"><div class="d-grid gap-1"><button type="button" class="btn btn-danger rounded-0 px-0 border-0" onclick="removeTableElem(this)">X</button></div></td>` +
+        `<td>${select.value}</td>` +
+        `<td>${name.value}</td>` +
+        `<td>${description.value}</td>` +
+        `<td><input class="form-check-input" type="checkbox" value="" checked></td>` +
+        `<td class="p-0 border-0"><div class="d-grid gap-1"><button type="button" class="btn btn-primary rounded-0 px-0 border-0" onclick="openParameters(this, '${groupId}', '${select.value}')">Open</button></div></td>` +
+        `<td hidden="true"></td>` +
         `</tr>`;
-        
-    document.getElementById(`${groupId}-parameters`).innerHTML += html;
+
+    const parameters = document.getElementById(`${groupId}-parameters`);
+    parameters.innerHTML += html;
+    parameters.normalize();
     closeModal();
+}
+
+function openParameters(elem, groupId, type) {
+    const commands = require('./templates/commands');
+    const nodes = elem.parentElement.parentElement.parentElement.parentElement.childNodes;
+    for (var i = 0; i < nodes.length; i++) {
+        if (nodes[i].isSameNode(elem.parentElement.parentElement.parentElement)) {
+            break;
+        }
+    }
+    createModal(commands[type](elem, groupId), `acceptParameters('${i}', '${groupId}', '${type}')`, 'Параметры', 'OK');
+}
+
+function acceptParameters(elem, groupId, type) {
+    const commands = require('./templates/commands');
+    commands[`get${type}`](elem, groupId);
 }
 
 function removeTableElem(elem) {
@@ -292,12 +312,12 @@ function removeTableElem(elem) {
 function createCommand(groupId, navTabId, navContentId) {
     const name = document.getElementById(`${groupId}-input-command-name`);
     const description = document.getElementById(`${groupId}-input-command-description`);
-    
+
     const splitId = groupId.split('-');
     const botName = document.getElementById(splitId[0]);
     const groupName = document.getElementById(`${splitId[0]}-${splitId[1]}`);
     const folderName = document.getElementById(groupId);
-    
+
     const pathToParentDir = path.join(__dirname, `bots/${botName.lastChild.textContent}/${groupName.lastChild.textContent}`);
     const pathToFile = path.join(__dirname, `bots/${botName.lastChild.textContent}/${groupName.lastChild.textContent}/${folderName.lastChild.textContent}/${name.value}.js`);
 
@@ -311,20 +331,29 @@ function createCommand(groupId, navTabId, navContentId) {
             }
         }
     }
-    
+
     const cTemplate = require('./templates/commands');
     let optionsTop = `${cTemplate.set('Name', `'${name.value}'`)}${cTemplate.set('Description', `'${description.value}'`)}`;
     let optionsBot = '';
-    
+
     const tbody = document.getElementById(`${groupId}-parameters`);
-    for(let row of tbody.childNodes) {
+    for (let row of tbody.childNodes) {
         const cType = row.childNodes[1].textContent;
         const cName = row.childNodes[2].textContent;
         const cDescription = row.childNodes[3].textContent;
-        console.log(row.childNodes[4])
         const cRequired = row.childNodes[4].lastChild.checked;
-        
-        const commandOptions = `${cTemplate.set('Name', `'${cName}'`)}${cTemplate.set('Description', `'${cDescription}'`)}${cTemplate.set('Required', cRequired)}`
+        let cParameters = '';
+        if (row.lastChild.textContent != "") {
+            const json = JSON.parse(row.lastChild.textContent);
+            for (let type in json) {
+                if (json[type].checked) {
+                    cParameters += cTemplate[`set${type}`](cTemplate, json[type].value);
+                }
+            }
+            console.log(cParameters);
+        }
+
+        const commandOptions = `${cTemplate.set('Name', `'${cName}'`)}${cTemplate.set('Description', `'${cDescription}'`)}${cTemplate.set('Required', cRequired)}${cParameters}`
         optionsTop += cTemplate.add(cType, commandOptions)
         optionsBot += cTemplate.get(cType, cName)
     }

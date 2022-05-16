@@ -1,7 +1,10 @@
 const { Menu, ipcRenderer, ipcMain, BrowserWindow } = require('electron');
 const { rmSync, readdirSync, readFileSync, writeFileSync } = require('fs');
 const { createNavTab, createModal, createYesNoModal } = require('./functions');
+const { spawn } = require('node:child_process');
 const path = require('path');
+const bots = new Map();
+const logs = new Map();
 
 const amdLoader = require('../node_modules/monaco-editor/min/vs/loader.js');
 const amdRequire = amdLoader.require;
@@ -41,7 +44,7 @@ amdRequire(['vs/editor/editor.main'], function () {
         typeRoots: [path.join(__dirname, "../node_modules/@types")]
     });
 
-    const dirs = readdirSync(path.join(__dirname, '../node_modules/@types/node')).filter(files => files.endsWith('.d.ts'));;
+    let dirs = readdirSync(path.join(__dirname, '../node_modules/@types/node')).filter(files => files.endsWith('.d.ts'));
     for (let file of dirs) {
         const req = readFileSync(path.join(__dirname, `../node_modules/@types/node/${file}`)).toString();
         monaco.languages.typescript.javascriptDefaults.addExtraLib(
@@ -51,7 +54,26 @@ amdRequire(['vs/editor/editor.main'], function () {
         //monaco.editor.createModel(req, 'typescript', monaco.Uri.parse(path.join(__dirname, `../node_modules/@types/node/${file}`)));
     }
 
-    const rdirs = readdirSync(path.join(__dirname, '../node_modules'), { withFileTypes: true }).filter(dir => dir.isDirectory()).map(dir => dir.name);
+    dirs = readdirSync(path.join(__dirname, '../node_modules/@discordjs'));
+    for (let dir of dirs) {
+        const json = JSON.parse(readFileSync(path.join(__dirname, `../node_modules/@discordjs/${dir}/package.json`)).toString());
+        json.typings = json.typings || json.types;
+        if (json.typings == undefined) continue;
+        const req = readFileSync(path.join(__dirname, `../node_modules/@discordjs/${dir}`, json.typings)).toString();
+        monaco.languages.typescript.javascriptDefaults.addExtraLib(
+            `declare module '@discordjs/${dir}' {\n${req}\n}`,
+            path.join(__dirname, `../node_modules/@discordjs/${dir}`, json.typings)
+        );
+        //monaco.editor.createModel(req, 'typescript', monaco.Uri.parse(path.join(__dirname, `../node_modules/@discordjs/${dir}`, json.typings)));
+    }
+
+    const req = readFileSync(path.join(__dirname, `../node_modules/discord.js/typings/index.d.ts`)).toString();
+    monaco.languages.typescript.javascriptDefaults.addExtraLib(
+        `declare module 'discord.js' {\n${req}\n}`,
+        path.join(__dirname, `../node_modules/discord-api-types/v10.d.ts`)
+    );
+
+    /*const rdirs = readdirSync(path.join(__dirname, '../node_modules'), { withFileTypes: true }).filter(dir => dir.isDirectory()).map(dir => dir.name);
     for (let dir of rdirs) {
         const files = readdirSync(path.join(__dirname, `../node_modules/${dir}`)).filter(files => files.endsWith('.d.ts'));
         for (let file of files) {
@@ -62,7 +84,7 @@ amdRequire(['vs/editor/editor.main'], function () {
             );
             //monaco.editor.createModel(req, 'typescript', monaco.Uri.parse(path.join(__dirname, `../node_modules/@types/node/${file}`)));
         }
-    }
+    }*/
 });
 
 window.addEventListener('contextmenu', (e) => {
@@ -172,7 +194,7 @@ ipcRenderer.on('openCode', (e, id) => {
         if (file) {
             const editor = monaco.editor.create(document.getElementById(`${id}-code-editor`), {
                 model: monaco.editor.createModel(file.toString('utf-8'), 'javascript'),
-                automaticLayout: true
+                automaticLayout: true,
             });
             editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function () {
                 writeFileSync(pathFile, editor.getValue());
@@ -280,4 +302,163 @@ ipcRenderer.on('deleteEvent', (e, id) => {
 
 ipcRenderer.on('deleteCommand', (e, id) => {
     createYesNoModal(`deleteFile('${id}')`, "Внимание!", "Вы действительно хотите удалить команду?");
+});
+
+ipcRenderer.on('connectBot', (e, id) => {
+    const name = document.getElementById(id);
+    const botName = name.lastChild.textContent;
+    if (!bots.get(botName)) {
+        const connect = spawn('node', [`${path.join(__dirname, `./bots/${botName}/index.js`)}`]);
+
+        connect.stdout.on('data', (data) => {
+            const elem = document.getElementById(`${id}-log`);
+            if (elem) elem.firstChild.firstChild.value += data;
+            const name = document.getElementById(id);
+            const botName = name.lastChild.textContent;
+            logs.set(botName, logs.get(botName) + data);
+        });
+
+        connect.stderr.on('data', (data) => {
+            const elem = document.getElementById(`${id}-log`);
+            if (elem) elem.firstChild.firstChild.value += data;
+            const name = document.getElementById(id);
+            const botName = name.lastChild.textContent;
+            logs.set(botName, logs.get(botName) + data);
+        });
+
+        connect.on('close', (code) => {
+            const elem = document.getElementById(`${id}-log`);
+            if (elem) elem.firstChild.firstChild.value += '\nDisconnecting the bot.\n\n';
+            const name = document.getElementById(id);
+            const botName = name.lastChild.textContent;
+            logs.set(botName, logs.get(botName) + '\nDisconnecting the bot.\n\n');
+        });
+
+        bots.set(botName, connect);
+        logs.set(botName, '');
+
+        const elem = document.createElement('i');
+        elem.classList.add('pe-1', 'fa-solid', 'fa-check');
+        elem.style = 'color: green;';
+        name.insertBefore(elem, name.lastChild);
+        createNavTab(`${id}-log-tab`, `Логи для бота ${botName}`, `${id}-log`, '<textarea class="form-control full-height-text" type="text" readonly></textarea>');
+    }
+});
+
+ipcRenderer.on('disconnectBot', (e, id) => {
+    const name = document.getElementById(id);
+
+    const connect = bots.get(name.lastChild.textContent);
+    if (connect) {
+        connect.kill();
+        name.removeChild(name.childNodes[1]);
+        bots.delete(name.lastChild.textContent);
+        logs.delete(name.lastChild.textContent);
+    }
+});
+
+ipcRenderer.on('refreshBot', (e, id) => {
+    const name = document.getElementById(id);
+    const botName = name.lastChild.textContent;
+    if (bots.get(botName)) {
+        bots.get(botName).kill();
+        const connect = spawn('node', [`${path.join(__dirname, `./bots/${botName}/index.js`)}`]);
+
+        connect.stdout.on('data', (data) => {
+            const elem = document.getElementById(`${id}-log`);
+            if (elem) elem.firstChild.firstChild.value += data;
+            const name = document.getElementById(id);
+            const botName = name.lastChild.textContent;
+            logs.set(botName, logs.get(botName) + data);
+        });
+
+        connect.stderr.on('data', (data) => {
+            const elem = document.getElementById(`${id}-log`);
+            if (elem) elem.firstChild.firstChild.value += data;
+            const name = document.getElementById(id);
+            const botName = name.lastChild.textContent;
+            logs.set(botName, logs.get(botName) + data);
+        });
+
+        connect.on('close', (code) => {
+            const elem = document.getElementById(`${id}-log`);
+            if (elem) elem.firstChild.firstChild.value += '\nDisconnecting the bot.\n\n';
+            const name = document.getElementById(id);
+            const botName = name.lastChild.textContent;
+            logs.set(botName, logs.get(botName) + '\nDisconnecting the bot.\n\n');
+        });
+
+        bots.set(botName, connect);
+
+        createNavTab(`${id}-log-tab`, `Логи для бота ${botName}`, `${id}-log`, '<textarea class="form-control full-height-text" type="text" readonly></textarea>');
+    }
+});
+
+ipcRenderer.on('connectAll', (e) => {
+    const tree = document.getElementById('tree');
+    for (let i = 0; i < tree.childElementCount; i += 2) {
+        const name = document.getElementById(tree.childNodes[i].id);
+        const botName = name.lastChild.textContent;
+        if (!bots.get(botName)) {
+            const connect = spawn('node', [`${path.join(__dirname, `./bots/${botName}/index.js`)}`]);
+
+            connect.stdout.
+                connect.stdout.on('data', (data) => {
+                    const elem = document.getElementById(`${tree.childNodes[i].id}-log`);
+                    if (elem) elem.firstChild.firstChild.value += data;
+                    const name = document.getElementById(tree.childNodes[i].id);
+                    const botName = name.lastChild.textContent;
+                    logs.set(botName, logs.get(botName) + data);
+                });
+
+            connect.stderr.on('data', (data) => {
+                const elem = document.getElementById(`${tree.childNodes[i].id}-log`);
+                if (elem) elem.firstChild.firstChild.value += data;
+                const name = document.getElementById(tree.childNodes[i].id);
+                const botName = name.lastChild.textContent;
+                logs.set(botName, logs.get(botName) + data);
+            });
+
+            connect.on('close', (code) => {
+                const elem = document.getElementById(`${tree.childNodes[i].id}-log`);
+                if (elem) elem.firstChild.firstChild.value += '\nDisconnecting the bot.\n\n';
+                const name = document.getElementById(tree.childNodes[i].id);
+                const botName = name.lastChild.textContent;
+                logs.set(botName, logs.get(botName) + '\nDisconnecting the bot.\n\n');
+            });
+
+            bots.set(botName, connect);
+            logs.set(botName, '');
+
+            const elem = document.createElement('i');
+            elem.classList.add('pe-1', 'fa-solid', 'fa-check');
+            elem.style = 'color: green;';
+            name.insertBefore(elem, name.lastChild);
+            createNavTab(`${tree.childNodes[i].id}-log-tab`, `Логи для бота ${botName}`, `${tree.childNodes[i].id}-log`, '<textarea class="form-control full-height-text" type="text" readonly></textarea>');
+        }
+    }
+});
+
+ipcRenderer.on('disconnectAll', (e) => {
+    const tree = document.getElementById('tree');
+    for (let i = 0; i < tree.childElementCount; i += 2) {
+        const name = document.getElementById(tree.childNodes[i].id);
+
+        const connect = bots.get(name.lastChild.textContent);
+        if (connect) {
+            connect.kill();
+            name.removeChild(name.childNodes[1]);
+            bots.delete(name.lastChild.textContent);
+            logs.delete(name.lastChild.textContent);
+        }
+    }
+});
+
+ipcRenderer.on('openLogs', (e, id) => {
+    const name = document.getElementById(id);
+    const botName = name.lastChild.textContent;
+    if (bots.get(botName)) {
+        createNavTab(`${id}-log-tab`, `Логи для бота ${botName}`, `${id}-log`, '<textarea class="form-control full-height-text" type="text" readonly></textarea>');
+        document.getElementById(`${id}-log`).firstChild.firstChild.value = logs.get(botName);
+    }
 });

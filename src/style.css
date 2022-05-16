@@ -70,7 +70,10 @@ body {
 
 .code-editor {
     height: 85vh;
-    margin-top: 14px;
+}
+
+.full-height-text {
+    height: 88vh;
 }
 
 .btn-close {
