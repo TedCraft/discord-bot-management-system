@@ -104,9 +104,9 @@ module.exports = {
                 const aTBody = document.getElementById(`${groupId}-parameters-modal`);
                 for (let row of aTBody.childNodes) {
                     const choice = new Array();
-                    choice.push(`"${row.childNodes[1].firstChild.firstChild.value}"`);
-                    choice.push(row.childNodes[2].firstChild.firstChild.value);
-                    choicesArr.push(`[${choice.join(', ')}]`)
+                    choice.push(`"name": "${row.childNodes[1].firstChild.firstChild.value}"`);
+                    choice.push(`"value": ${row.childNodes[2].firstChild.firstChild.value}`);
+                    choicesArr.push(`{${choice.join(', ')}}`)
                 }
                 content.push(`"Choices": { "checked": ${checked}, "value": [${choicesArr.join(', ')}] }`);
             }
@@ -183,9 +183,9 @@ module.exports = {
                 const aTBody = document.getElementById(`${groupId}-parameters-modal`);
                 for (let row of aTBody.childNodes) {
                     const choice = new Array();
-                    choice.push(`"${row.childNodes[1].firstChild.firstChild.value}"`);
-                    choice.push(row.childNodes[2].firstChild.firstChild.value);
-                    choicesArr.push(`[${choice.join(', ')}]`)
+                    choice.push(`"name": "${row.childNodes[1].firstChild.firstChild.value}"`);
+                    choice.push(`"value": ${row.childNodes[2].firstChild.firstChild.value}`);
+                    choicesArr.push(`{${choice.join(', ')}}`)
                 }
                 content.push(`"Choices": { "checked": ${checked}, "value": [${choicesArr.join(', ')}] }`);
             }
@@ -248,12 +248,9 @@ module.exports = {
             const aTBody = document.getElementById(`${groupId}-parameters-modal`);
             for (let row of aTBody.childNodes) {
                 const choice = new Array();
-                for (let col of row.childNodes) {
-                    if (!col.classList.contains('p-0')) {
-                        choice.push(`"${col.firstChild.firstChild.value}"`)
-                    }
-                }
-                choicesArr.push(`[${choice.join(', ')}]`)
+                choice.push(`"name": "${row.childNodes[1].firstChild.firstChild.value}"`);
+                choice.push(`"value": "${row.childNodes[2].firstChild.firstChild.value}"`);
+                choicesArr.push(`{${choice.join(', ')}}`)
             }
             content.push(`"Choices": { "checked": ${checked}, "value": [${choicesArr.join(', ')}] }`);
         }
@@ -275,7 +272,7 @@ module.exports = {
     },
     
     setChoices: (json, content) => {
-        return json.addType("Choices", `${JSON.stringify(content)}`);
+        return json.set("Choices", `${JSON.stringify(content).slice(1,-1)}`);
     },
     
     setMaxValue: (json, content) => {
