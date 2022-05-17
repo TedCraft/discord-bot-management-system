@@ -117,15 +117,19 @@ function addFileToTree(botName, folder, groupName, name) {
 
 function createBot(navTabId, navContentId) {
     const name = document.getElementById('inputBotName');
+    if (name.value === '') {
+        ipcRenderer.send('error', `Ошибка!`, `Введите название бота!`);
+        return;
+    }
     const token = document.getElementById('inputToken');
+    if (token.value === '') {
+        ipcRenderer.send('error', `Ошибка!`, `Введите токен бота!`);
+        return;
+    }
     const template = document.getElementById('inputTemplate');
     const from = path.join(__dirname, `/templates/bots/${template.value}`);
     const to = path.join(__dirname, `/bots/${name.value}`);
     if (!existsSync(to)) {
-        if (token.value === '') {
-            ipcRenderer.send('error', `Ошибка!`, `Введите токен бота!`);
-            return;
-        }
         mkdirSync(to, { recursive: true });
         copydir.sync(from, to, {
             utimes: true,  // keep add time and modify time
@@ -152,6 +156,10 @@ function createGroup(name, folder) {
     const botName = document.getElementById(name);
     const folderName = document.getElementById(`${name}-${folder}`);
     const groupName = document.getElementById('inputGroupName');
+    if (groupName.value === '') {
+        ipcRenderer.send('error', `Ошибка!`, `Введите название подгруппы!`);
+        return;
+    }
     const dir = path.join(__dirname, `/bots/${botName.lastChild.textContent}/${folderName.lastChild.textContent}/${groupName.value}`);
     if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
@@ -159,7 +167,7 @@ function createGroup(name, folder) {
         closeModal();
     }
     else {
-        ipcRenderer.send('error', `Ошибка!`, `Группа с именем ${groupName.value} уже существует!`);
+        ipcRenderer.send('error', `Ошибка!`, `Подгруппа с именем ${groupName.value} уже существует!`);
     }
 }
 
@@ -183,7 +191,7 @@ function deleteGroup(id) {
 
     const dir = path.join(__dirname, `bots/${botName.lastChild.textContent}/${groupName.lastChild.textContent}/${name.lastChild.textContent}`);
     if (readdirSync(dir).length != 0) {
-        ipcRenderer.send('error', `Ошибка!`, `Группа с именем ${name.lastChild.textContent} не пустая!`);
+        ipcRenderer.send('error', `Ошибка!`, `Подгруппа с именем ${name.lastChild.textContent} не пустая!`);
         return;
     }
 
@@ -249,7 +257,7 @@ function addParameter(groupId) {
                 <textarea class="form-control" id="${groupId}-input-parameter-description" rows="2"></textarea>
             </div>
         </form>`;
-    createModal(content, `addCommandParameter('${groupId}')`, 'Добавление параметра', 'Добавить');
+    createModal(content, `addCommandParameter('${groupId}')`, 'Добавление опции', 'Добавить');
 }
 
 function addParameterModal(groupId) {

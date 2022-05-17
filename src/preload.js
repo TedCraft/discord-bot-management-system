@@ -166,16 +166,16 @@ ipcRenderer.on('createGroup', (e, id) => {
     const menuContent =
         `<form>
             <div class="mb-3">
-                <label for="inputGroupName" class="form-label">Введите название группы:</label>
+                <label for="inputGroupName" class="form-label">Введите название подгруппы:</label>
                 <input type="text" class="form-control" id="inputGroupName">
             </div>
         </form>`;
 
-    createModal(menuContent, `createGroup('${splitId[0]}', '${splitId[1]}')`, "Создание группы", "Создать");
+    createModal(menuContent, `createGroup('${splitId[0]}', '${splitId[1]}')`, "Создание подгруппы", "Создать");
 });
 
 ipcRenderer.on('deleteGroup', (e, id) => {
-    createYesNoModal(`deleteGroup('${id}')`, "Внимание!", "Вы действительно хотите удалить группу?");
+    createYesNoModal(`deleteGroup('${id}')`, "Внимание!", "Вы действительно хотите удалить подгруппу?");
 });
 
 ipcRenderer.on('openCode', (e, id) => {
@@ -233,7 +233,7 @@ ipcRenderer.on('createEvent', (e, id) => {
             </div>
         </div>`;
 
-    createModal(content, `eventCreate('${id}')`, "Создание ивента", "Создать");
+    createModal(content, `eventCreate('${id}')`, "Создание события", "Создать");
 });
 
 ipcRenderer.on('createCommand', (e, id) => {
@@ -259,7 +259,7 @@ ipcRenderer.on('createCommand', (e, id) => {
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="${groupId}-parameters-heading">
                         <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#${groupId}-parameters-collapse" aria-expanded="true" aria-controls="${groupId}-parameters-collapse">
-                            Параметры команды
+                            Опции команды
                         </button>
                     </h2>
                     <div id="${groupId}-parameters-collapse" class="accordion-collapse collapse show" aria-labelledby="${groupId}-parameters-heading">

@@ -74,7 +74,7 @@ ipcMain.on('show-context-menu-bot', (event, id) => {
 ipcMain.on('show-context-menu-bot-eorc', (event, id) => {
     const template = [
         {
-            label: 'Создать группу',
+            label: 'Создать подгруппу',
             click: () => { event.sender.send('createGroup', id) }
         },
     ]
@@ -92,11 +92,11 @@ ipcMain.on('show-context-menu-bot-eorc-group', (event, id) => {
         },
         { type: 'separator' },
         {
-            label: 'Создать группу',
+            label: 'Создать подгруппу',
             click: () => { event.sender.send('createGroup', id) }
         },
         {
-            label: `Удалить группу`,
+            label: `Удалить подгруппу`,
             click: () => { event.sender.send('deleteGroup', id) }
         },
     ]
