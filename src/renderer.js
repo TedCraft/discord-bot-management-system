@@ -249,11 +249,11 @@ function addParameter(groupId) {
     const content =
         `<form>
             <div class="mb-3">
-                <label for="${groupId}-input-parameter-name" class="form-label">Название параметра:</label>
+                <label for="${groupId}-input-parameter-name" class="form-label">Название опции:</label>
                 <input type="text" class="form-control" id="${groupId}-input-parameter-name">
             </div>
             <div class="mb-3">
-                <label for="${groupId}-input-parameter-description" class="form-label">Описание параметра</label>
+                <label for="${groupId}-input-parameter-description" class="form-label">Описание опции</label>
                 <textarea class="form-control" id="${groupId}-input-parameter-description" rows="2"></textarea>
             </div>
         </form>`;
@@ -277,7 +277,11 @@ function addParameterModal(groupId) {
 
 function addCommandParameter(groupId) {
     const name = document.getElementById(`${groupId}-input-parameter-name`);
+    if (name.value === "") return ipcRenderer.send('error', `Ошибка!`, `Команда введите название команды!`);
+    if (!/^[-_\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$/u.test(name.value)) return ipcRenderer.send('error', `Ошибка!`, `Название команды в неверном формате!`);
     const description = document.getElementById(`${groupId}-input-parameter-description`);
+    if (name.value === "") return ipcRenderer.send('error', `Ошибка!`, `Команда введите описание команды!`);
+
     const select = document.getElementById(`${groupId}-parameters-select`);
 
     const html =
@@ -319,7 +323,10 @@ function removeTableElem(elem) {
 
 function createCommand(groupId, navTabId, navContentId) {
     const name = document.getElementById(`${groupId}-input-command-name`);
+    if (name.value === "") return ipcRenderer.send('error', `Ошибка!`, `Команда введите название команды!`);
+    if (!/^[-_\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$/u.test(name.value)) return ipcRenderer.send('error', `Ошибка!`, `Название команды в неверном формате!`);
     const description = document.getElementById(`${groupId}-input-command-description`);
+    if (name.value === "") return ipcRenderer.send('error', `Ошибка!`, `Команда введите описание команды!`);
 
     const splitId = groupId.split('-');
     const botName = document.getElementById(splitId[0]);
@@ -333,10 +340,7 @@ function createCommand(groupId, navTabId, navContentId) {
     for (let dir of dirs) {
         const files = readdirSync(`${pathToParentDir}/${dir}`).filter(files => files.endsWith('.js'));
         for (const file of files) {
-            if (file.slice(0, -3) == name.value) {
-                ipcRenderer.send('error', `Ошибка!`, `Команда ${file.slice(0, -3)} уже существует!`);
-                return;
-            }
+            if (file.slice(0, -3) == name.value) return ipcRenderer.send('error', `Ошибка!`, `Команда ${file.slice(0, -3)} уже существует!`);
         }
     }
 

@@ -1,4 +1,5 @@
 const { closeModal } = require('../functions');
+const { ipcRenderer } = require('electron');
 
 module.exports = {
     types: ["Boolean", "Channel", "Integer", "Mentionable", "Number", "Role", "String", "User", "Subcommand", "SubcommandGroup"],
@@ -44,6 +45,7 @@ module.exports = {
             }
         }
         const tbody = document.getElementById(`${groupId}-parameters`);
+        if (channelTypes.length === 0) checked = false;
         tbody.childNodes[idx].lastChild.innerHTML = `{ "ChannelTypes": { "checked": ${checked}, "value": [${channelTypes.join(', ')}] } }`;
         closeModal();
     },
@@ -104,13 +106,22 @@ module.exports = {
                 const aTBody = document.getElementById(`${groupId}-parameters-modal`);
                 for (let row of aTBody.childNodes) {
                     const choice = new Array();
-                    choice.push(`"name": "${row.childNodes[1].firstChild.firstChild.value}"`);
-                    choice.push(`"value": ${row.childNodes[2].firstChild.firstChild.value}`);
+                    const name = row.childNodes[1].firstChild.firstChild.value;
+                    const value = row.childNodes[2].firstChild.firstChild.value;
+                    if(checked) {
+                        if (name === "") return ipcRenderer.send('error', `Ошибка!`, `Введите имя!`);
+                        if (value === "") return ipcRenderer.send('error', `Ошибка!`, `Введите значение!`);
+                    }
+                    choice.push(`"name": "${name}"`);
+                    choice.push(`"value": ${value}`);
                     choicesArr.push(`{${choice.join(', ')}}`)
                 }
                 content.push(`"Choices": { "checked": ${checked}, "value": [${choicesArr.join(', ')}] }`);
             }
             else {
+                if(checked) {
+                    if(accordion.value === "") return ipcRenderer.send('error', `Ошибка!`, `Введите число!`);
+                }
                 content.push(`"${accordion.id}": { "checked": ${checked}, "value": "${accordion.value}" }`)
             }
         }
@@ -183,13 +194,22 @@ module.exports = {
                 const aTBody = document.getElementById(`${groupId}-parameters-modal`);
                 for (let row of aTBody.childNodes) {
                     const choice = new Array();
-                    choice.push(`"name": "${row.childNodes[1].firstChild.firstChild.value}"`);
-                    choice.push(`"value": ${row.childNodes[2].firstChild.firstChild.value}`);
+                    const name = row.childNodes[1].firstChild.firstChild.value;
+                    const value = row.childNodes[2].firstChild.firstChild.value;
+                    if(checked) {
+                        if (name === "") return ipcRenderer.send('error', `Ошибка!`, `Введите имя!`);
+                        if (value === "") return ipcRenderer.send('error', `Ошибка!`, `Введите значение!`);
+                    }
+                    choice.push(`"name": "${name}"`);
+                    choice.push(`"value": ${value}`);
                     choicesArr.push(`{${choice.join(', ')}}`)
                 }
                 content.push(`"Choices": { "checked": ${checked}, "value": [${choicesArr.join(', ')}] }`);
             }
             else {
+                if(checked) {
+                    if(accordion.value === "") return ipcRenderer.send('error', `Ошибка!`, `Введите число!`);
+                }
                 content.push(`"${accordion.id}": { "checked": ${checked}, "value": "${accordion.value}" }`)
             }
         }
@@ -248,8 +268,14 @@ module.exports = {
             const aTBody = document.getElementById(`${groupId}-parameters-modal`);
             for (let row of aTBody.childNodes) {
                 const choice = new Array();
-                choice.push(`"name": "${row.childNodes[1].firstChild.firstChild.value}"`);
-                choice.push(`"value": "${row.childNodes[2].firstChild.firstChild.value}"`);
+                const name = row.childNodes[1].firstChild.firstChild.value;
+                const value = row.childNodes[2].firstChild.firstChild.value;
+                if(checked) {
+                    if (name === "") return ipcRenderer.send('error', `Ошибка!`, `Введите имя!`);
+                    if (value === "") return ipcRenderer.send('error', `Ошибка!`, `Введите значение!`);
+                }
+                choice.push(`"name": "${name}"`);
+                choice.push(`"value": "${value}"`);
                 choicesArr.push(`{${choice.join(', ')}}`)
             }
             content.push(`"Choices": { "checked": ${checked}, "value": [${choicesArr.join(', ')}] }`);
