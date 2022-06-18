@@ -324,6 +324,11 @@ ipcRenderer.on('connectBot', (e, id) => {
             const name = document.getElementById(id);
             const botName = name.lastChild.textContent;
             logs.set(botName, logs.get(botName) + data);
+            
+            bots.get(botName).kill();
+            name.removeChild(name.childNodes[1]);
+            bots.delete(botName);
+            logs.delete(botName);
         });
 
         connect.on('close', (code) => {
@@ -378,6 +383,11 @@ ipcRenderer.on('refreshBot', (e, id) => {
             const name = document.getElementById(id);
             const botName = name.lastChild.textContent;
             logs.set(botName, logs.get(botName) + data);
+            
+            bots.get(botName).kill();
+            name.removeChild(name.childNodes[1]);
+            bots.delete(botName);
+            logs.delete(botName);
         });
 
         connect.on('close', (code) => {
@@ -417,6 +427,11 @@ ipcRenderer.on('connectAll', (e) => {
                 const name = document.getElementById(tree.childNodes[i].id);
                 const botName = name.lastChild.textContent;
                 logs.set(botName, logs.get(botName) + data);
+                
+                bots.get(botName).kill();
+                name.removeChild(name.childNodes[1]);
+                bots.delete(botName);
+                logs.delete(botName);
             });
 
             connect.on('close', (code) => {

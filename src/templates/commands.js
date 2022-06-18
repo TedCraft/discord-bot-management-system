@@ -108,7 +108,7 @@ module.exports = {
                     const choice = new Array();
                     const name = row.childNodes[1].firstChild.firstChild.value;
                     const value = row.childNodes[2].firstChild.firstChild.value;
-                    if(checked) {
+                    if (checked) {
                         if (name === "") return ipcRenderer.send('error', `Ошибка!`, `Введите имя!`);
                         if (value === "") return ipcRenderer.send('error', `Ошибка!`, `Введите значение!`);
                     }
@@ -119,8 +119,8 @@ module.exports = {
                 content.push(`"Choices": { "checked": ${checked}, "value": [${choicesArr.join(', ')}] }`);
             }
             else {
-                if(checked) {
-                    if(accordion.value === "") return ipcRenderer.send('error', `Ошибка!`, `Введите число!`);
+                if (checked) {
+                    if (accordion.value === "") return ipcRenderer.send('error', `Ошибка!`, `Введите число!`);
                 }
                 content.push(`"${accordion.id}": { "checked": ${checked}, "value": "${accordion.value}" }`)
             }
@@ -196,7 +196,7 @@ module.exports = {
                     const choice = new Array();
                     const name = row.childNodes[1].firstChild.firstChild.value;
                     const value = row.childNodes[2].firstChild.firstChild.value;
-                    if(checked) {
+                    if (checked) {
                         if (name === "") return ipcRenderer.send('error', `Ошибка!`, `Введите имя!`);
                         if (value === "") return ipcRenderer.send('error', `Ошибка!`, `Введите значение!`);
                     }
@@ -207,8 +207,8 @@ module.exports = {
                 content.push(`"Choices": { "checked": ${checked}, "value": [${choicesArr.join(', ')}] }`);
             }
             else {
-                if(checked) {
-                    if(accordion.value === "") return ipcRenderer.send('error', `Ошибка!`, `Введите число!`);
+                if (checked) {
+                    if (accordion.value === "") return ipcRenderer.send('error', `Ошибка!`, `Введите число!`);
                 }
                 content.push(`"${accordion.id}": { "checked": ${checked}, "value": "${accordion.value}" }`)
             }
@@ -270,7 +270,7 @@ module.exports = {
                 const choice = new Array();
                 const name = row.childNodes[1].firstChild.firstChild.value;
                 const value = row.childNodes[2].firstChild.firstChild.value;
-                if(checked) {
+                if (checked) {
                     if (name === "") return ipcRenderer.send('error', `Ошибка!`, `Введите имя!`);
                     if (value === "") return ipcRenderer.send('error', `Ошибка!`, `Введите значение!`);
                 }
@@ -292,19 +292,23 @@ module.exports = {
     getUser: (idx, groupId) => {
         closeModal();
     },
-    
+
     setChannelTypes: (json, content) => {
         return json.addType("ChannelTypes", `${JSON.stringify(content)}`);
     },
-    
+
     setChoices: (json, content) => {
-        return json.set("Choices", `${JSON.stringify(content).slice(1,-1)}`);
+        let str = "";
+        for (let choice of content) {
+            str += json.addType("Choices", `${JSON.stringify(choice)}`);
+        }
+        return str;
     },
-    
+
     setMaxValue: (json, content) => {
         return json.set("MaxValue", `${content}`);
     },
-    
+
     setMinValue: (json, content) => {
         return json.set("MinValue", `${content}`);
     },
